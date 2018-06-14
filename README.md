@@ -1,3 +1,5 @@
+This tool exports JSON files for all pages of specified book the specified directory.
+
 # How to install ?
 
 `npm install --registry "https://repo.plus4u.net/repository/npm/" -g uubookkit-exporter`
