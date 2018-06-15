@@ -30,7 +30,7 @@ async function exportBook(book, token, outputDir) {
   const pages = listPagesResponse.data.itemList;
   for (const page of pages) {
     const pageDataResponse = await AppClient.get(bookuri.toString() + "/loadPage", {code: page.code}, httpOptions);
-    const fileName = `${page.code}-${page.name.cs ? page.name.cs : page.name.en}.json`;
+    const fileName = `${page.code}.json`;
     await writefile(path.join(pagesDir, fileName), JSON.stringify(pageDataResponse.data, null, 2),"utf8");
   }
 
