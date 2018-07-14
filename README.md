@@ -1,4 +1,6 @@
-This tool exports JSON files for all pages of specified book the specified directory.
+This tool exports JSON files for all pages, referred Binaries and UuBml.Draws of specified book into the specified directory.
+
+[Changelog](doc/CHANGELOG.md)
 
 # How to install ?
 

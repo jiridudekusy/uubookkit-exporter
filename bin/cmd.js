@@ -27,10 +27,21 @@ const optionDefinitions = [
     description: "Target output directory"
   },
   {
+    name: "binaries",
+    type: Boolean,
+    description: "Export also referred binaries."
+  },
+  {
+    name: "draws",
+    type: Boolean,
+    description: "Export also referred UuBml.Draws."
+  },
+
+  {
     name: "help",
     alias: "h",
     type: Boolean,
-    description: "displays this usage guide."
+    description: "Displays this usage guide."
   },
 ];
 const sections = [
@@ -41,8 +52,8 @@ const sections = [
   {
     header: "Synopsis",
     content: [
-      "$ uubookkit-exporter {bold --book} {underline url} {bold --token} {underline token} {bold --output} {underline dir}",
-      "$ uubookkit-exporter {bold --help}"
+      "uubookkit-exporter {bold --book} {underline url} {bold --token} {underline token} {bold --output} {underline dir} [{bold --binaries}] [{bold --draws}]",
+      "uubookkit-exporter {bold --help}"
     ]
   },
   {
@@ -54,9 +65,13 @@ const usage = commandLineUsage(sections);
 const options = commandLineArgs(optionDefinitions);
 
 const valid = options.help || (options.book && options.token && options.output);
-if(!valid || options.help){
+if (!valid || options.help) {
   console.log(usage);
   process.exit();
 }
 
-exportBook(options.book, options.token, options.output);
+let exportOptions = {
+  exportBinaries: Boolean(options.binaries),
+  exportDraws: Boolean(options.draws)
+}
+exportBook(options.book, options.token, options.output, exportOptions);
