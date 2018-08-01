@@ -2,6 +2,7 @@ const {Uri, UriBuilder} = require("uu_appg01_core-uri");
 const {AppClient} = require("uu_appg01_server-client");
 const {LoggerFactory} = require("uu_appg01_core-logging");
 const {Config} = require("uu_appg01_core-utils");
+const pjson = require('./package.json');
 
 const fs = require('fs');
 let mkdirp = require('mkdirp');
@@ -53,7 +54,8 @@ async function exportBook(book, token, outputDir, options) {
     book,
     options: options,
     exportStart: new Date(),
-    stats: {}
+    stats: {},
+    version: pjson.version
   };
 
   let bookuri = UriBuilder.parse(book).clearParameters().setUseCase("").toUri();
@@ -92,7 +94,7 @@ async function exportBook(book, token, outputDir, options) {
         body = [body];
       }
       let transformedBody = body
-      .map(part => part.startsWith("<uu5string/>") ? part.substring("<uu5string/>".length) : part)
+      .map(part => part.content.startsWith("<uu5string/>") ? part.content.substring("<uu5string/>".length) : part.content)
       .join("\n\n<div hidden>Part end(uu5string does not support comments)</div>\n\n");
       transformedBody = "<uu5string/>\n" + transformedBody;
       await writefile(path.join(pagesDir, `${page.code}.uu5`), transformedBody, "utf8");
@@ -206,14 +208,12 @@ function _processNode(node, ctx, options) {
 function _analyzePage(page, ctx, options) {
   logger.info(`Analyzing page ${page.code} for other resoureces.`)
   let body = page.body;
-  if (typeof body === "string") {
-    body = [body]
-  }
   body.forEach(part => {
     let parser = new DOMParser();
-    if (part.startsWith("<uu5string/>")) {
-      part = "<root>" + part + "</root>";
-      let dom = parser.parseFromString(part);
+    let content = part.content;
+    if (content.startsWith("<uu5string/>")) {
+      content = "<root>" + content + "</root>";
+      let dom = parser.parseFromString(content);
       Array.prototype.filter
       .call(dom.documentElement.childNodes, node => node.nodeType === 1)
       .filter(node => node.nodeName != "uu5string")

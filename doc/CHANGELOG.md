@@ -1,3 +1,8 @@
+0.4.0
+-----
+* Add support for uuBookKit 3.x
+  * uuBmlDrawg03 is not yet supported. This tool supports uuBmlDrawg02 
+
 0.3.1
 -----
 * Added possibility to transform page content to formatted uu5string in another file.
