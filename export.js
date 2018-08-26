@@ -2,6 +2,7 @@ const {Uri, UriBuilder} = require("uu_appg01_core-uri");
 const {AppClient} = require("uu_appg01_server-client");
 const {LoggerFactory} = require("uu_appg01_core-logging");
 const {Config} = require("uu_appg01_core-utils");
+const DefaultConfig = require("./config/default");
 const pjson = require('./package.json');
 
 const fs = require('fs');
@@ -14,7 +15,8 @@ const downloadUuBmlDraw = require("./draw");
 const writefile = promisify(fs.writeFile);
 mkdirp = promisify(mkdirp);
 
-Config.activateProfiles("development");
+Config.activeProfiles = "development";
+Config.registerImplicitSource(DefaultConfig);
 const logger = LoggerFactory.get("exporter");
 
 let _downloadUuBmlDraws, _downloadBinaries;
@@ -83,22 +85,27 @@ async function exportBook(book, token, outputDir, options) {
     error: 0
   };
   for (const page of pages) {
-    const pageDataResponse = await AppClient.get(bookuri.toString() + "/loadPage", {code: page.code}, httpOptions);
-    const pageData = pageDataResponse.data;
-    _analyzePage(pageData, otherResources, options);
-    const fileName = `${page.code}.json`;
-    await writefile(path.join(pagesDir, fileName), JSON.stringify(pageData, null, 2), "utf8");
-    if (options.transformBody) {
-      let body = pageData.body;
-      if (!Array.isArray(body)) {
-        body = [body];
+    try {
+      const pageDataResponse = await AppClient.get(bookuri.toString() + "/loadPage", {code: page.code}, httpOptions);
+      const pageData = pageDataResponse.data;
+      _analyzePage(pageData, otherResources, options);
+      const fileName = `${page.code}.json`;
+      await writefile(path.join(pagesDir, fileName), JSON.stringify(pageData, null, 2), "utf8");
+      if (options.transformBody) {
+        let body = pageData.body;
+        if (!Array.isArray(body)) {
+          body = [body];
+        }
+        let transformedBody = body
+        .map(part => part.content.startsWith("<uu5string/>") ? part.content.substring("<uu5string/>".length) : part.content)
+        .join("\n\n<div hidden>Part end(uu5string does not support comments)</div>\n\n");
+        transformedBody = "<uu5string/>\n" + transformedBody;
+        await writefile(path.join(pagesDir, `${page.code}.uu5`), transformedBody, "utf8");
+        pagesStats.exported++;
       }
-      let transformedBody = body
-      .map(part => part.content.startsWith("<uu5string/>") ? part.content.substring("<uu5string/>".length) : part.content)
-      .join("\n\n<div hidden>Part end(uu5string does not support comments)</div>\n\n");
-      transformedBody = "<uu5string/>\n" + transformedBody;
-      await writefile(path.join(pagesDir, `${page.code}.uu5`), transformedBody, "utf8");
-      pagesStats.exported++;
+    } catch (e) {
+      pagesStats.error++;
+      logger.error(`Page ${page.code} cannot be downloaded.`, e);
     }
   }
   exportDescriptor.stats.pages = pagesStats;

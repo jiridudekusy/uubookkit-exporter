@@ -1,3 +1,10 @@
+0.4.1
+-----
+
+Bug fixes:
+* Download fail of page does not break the export process. It is only logged.
+* Fixed logging. Output should not contain PRFLG records.
+
 0.4.0
 -----
 * Add support for uuBookKit 3.x
