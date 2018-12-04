@@ -53,6 +53,12 @@ const optionDefinitions = [
     alias: "T",
     type: Boolean,
     description: "Transform page body to formatted uu5string and stores it to another file."
+  },
+  {
+    name: "markdown",
+    alias: "m",
+    type: Boolean,
+    description: "Transform page body to markdown."
   }
 ];
 const cliDefinition = [
@@ -92,6 +98,7 @@ if (!valid || options.help) {
 let exportOptions = {
   exportBinaries: Boolean(options.binaries),
   exportDraws: Boolean(options.draws),
-  transformBody: Boolean(options.transform)
+  transformBody: Boolean(options.transform),
+  markdown: Boolean(options.markdown)
 }
 exportBook(options.book, options.token, options.output, exportOptions);

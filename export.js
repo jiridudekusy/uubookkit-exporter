@@ -12,12 +12,19 @@ const path = require('path');
 const DOMParser = require("xmldom-uu5").DOMParser;
 const downloadUuBmlDraw = require("./draw");
 
+const {UU5ToMarkdown} = require("uu5-to-markdown");
+const {UuBookKitPlugin, UU5CodeKitConverters, UuAppDesignKitConverters} = require("uu5-to-markdown");
+const {UuBookKitToMarkdown} = require("uu5-to-markdown");
+
 const writefile = promisify(fs.writeFile);
 mkdirp = promisify(mkdirp);
 
 Config.activeProfiles = "development";
 Config.registerImplicitSource(DefaultConfig);
 const logger = LoggerFactory.get("exporter");
+
+const uu5toMarkdown = new UU5ToMarkdown( new UU5CodeKitConverters(), new UuBookKitPlugin(), new UuAppDesignKitConverters());
+const uuBookKitToMarkdown = new UuBookKitToMarkdown(uu5toMarkdown);
 
 let _downloadUuBmlDraws, _downloadBinaries;
 
@@ -33,7 +40,11 @@ const defaultOptions = {
   /**
    * Transforms page body to formatted uu5string and stores it to another file.
    */
-  transformBody: false
+  transformBody: false,
+  /**
+   * Transform page body to markdown.
+   */
+  markdown: false
 };
 
 /**
@@ -103,6 +114,10 @@ async function exportBook(book, token, outputDir, options) {
         await writefile(path.join(pagesDir, `${page.code}.uu5`), transformedBody, "utf8");
         pagesStats.exported++;
       }
+      if (options.markdown) {
+        let md = await _transformToMD(pageData);
+        await writefile(path.join(pagesDir, `${page.code}.md`), md, "utf8");
+      }
     } catch (e) {
       pagesStats.error++;
       logger.error(`Page ${page.code} cannot be downloaded.`, e);
@@ -118,6 +133,10 @@ async function exportBook(book, token, outputDir, options) {
   await writefile(path.join(outputDir, "export-result.json"), JSON.stringify(exportDescriptor, null, 2), "utf8");
   logger.info("Export has been finished. See export statistics bellow.");
   console.log(JSON.stringify(exportDescriptor, null, 2));
+}
+
+_transformToMD = async function _transformToMD(pageData) {
+  return await uuBookKitToMarkdown.toMarkdown(JSON.stringify(pageData));
 }
 
 /**

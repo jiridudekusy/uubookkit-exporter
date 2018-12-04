@@ -1,3 +1,7 @@
+0.5.0
+-----
+* `-m` option transforms each page to markdown using `uu5-to-markdown`
+
 0.4.1
 -----
 
