@@ -1,7 +1,7 @@
 {
   "name": "uubookkit-exporter",
   "license": "MIT",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/jiridudekusy/uubookkit-exporter.git"
@@ -17,7 +17,7 @@
     "mkdirp": "^0.5.1",
     "uu_appg01_server": "^3.3.0",
     "xmldom-uu5": "^0.1.28",
-    "uu5-to-markdown": "^0.3.2"
+    "uu5-to-markdown": "^0.4.2"
   },
   "bin": "bin/cmd.js"
 }
