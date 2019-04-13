@@ -10,7 +10,8 @@ let mkdirp = require('mkdirp');
 const {promisify} = require('util');
 const path = require('path');
 const DOMParser = require("xmldom-uu5").DOMParser;
-const downloadUuBmlDraw = require("./draw");
+const downloadUuBmlDraw2 = require("./draw-g02");
+const downloadUuBmlDraw3 = require("./draw-g03");
 
 const {UU5ToMarkdown} = require("uu5-to-markdown");
 const {UuBookKitPlugin, UU5CodeKitConverters, UuAppDesignKitConverters} = require("uu5-to-markdown");
@@ -23,7 +24,7 @@ Config.activeProfiles = "development";
 Config.registerImplicitSource(DefaultConfig);
 const logger = LoggerFactory.get("exporter");
 
-const uu5toMarkdown = new UU5ToMarkdown( new UU5CodeKitConverters(), new UuBookKitPlugin(), new UuAppDesignKitConverters());
+const uu5toMarkdown = new UU5ToMarkdown(new UU5CodeKitConverters(), new UuBookKitPlugin(), new UuAppDesignKitConverters());
 const uuBookKitToMarkdown = new UuBookKitToMarkdown(uu5toMarkdown);
 
 let _downloadUuBmlDraws, _downloadBinaries;
@@ -124,7 +125,7 @@ async function exportBook(book, token, outputDir, options) {
     }
   }
   exportDescriptor.stats.pages = pagesStats;
-  exportDescriptor.stats.draws = await _downloadUuBmlDraws(outputDir, otherResources.draws, httpOptions);
+  exportDescriptor.stats.draws = await _downloadUuBmlDraws(outputDir, otherResources.draws, bookuri, httpOptions);
   exportDescriptor.stats.binaries = await _downloadBinaries(outputDir, otherResources.binaries, bookuri, httpOptions);
 
   exportDescriptor.exportEnd = new Date();
@@ -147,7 +148,7 @@ _transformToMD = async function _transformToMD(pageData) {
  * @returns {Promise<void>}
  * @private
  */
-_downloadUuBmlDraws = async function _downloadUuBmlDraws(outputDir, draws, httpOptions) {
+_downloadUuBmlDraws = async function _downloadUuBmlDraws(outputDir, draws, bookuri, httpOptions) {
   let stats = {
     exported: 0,
     error: 0
@@ -156,12 +157,16 @@ _downloadUuBmlDraws = async function _downloadUuBmlDraws(outputDir, draws, httpO
   await mkdirp(drawsDir);
   for (let draw of draws) {
     try {
-      logger.info(`Downloading UuBmlDraw ${draw}.`);
-      await downloadUuBmlDraw(draw, httpOptions, drawsDir);
+      logger.info(`Downloading UuBmlDraw ${draw.code}.`);
+      if (draw.version === 2) {
+        await downloadUuBmlDraw2(draw.code, httpOptions, drawsDir);
+      } else {
+        await downloadUuBmlDraw3(draw.code, bookuri, httpOptions, drawsDir);
+      }
       stats.exported++;
     } catch (e) {
       stats.error++;
-      logger.error(`UuBmlDraw ${draw} cannot be downloaded.`, e);
+      logger.error(`UuBmlDraw ${draw.code} cannot be downloaded.`, e);
     }
   }
   return stats;
@@ -206,7 +211,6 @@ _downloadBinaries = async function _downloadBinaries(outputDir, binaries, bookur
 }
 
 function _processNode(node, ctx, options) {
-  //TODO provide configurable settings
   if (options.exportBinaries) {
     if (node.nodeName === "UuApp.DesignKit.UU5ComponentExample") {
       if (node.hasAttribute("srcUuBinaryCode")) {
@@ -221,7 +225,14 @@ function _processNode(node, ctx, options) {
       if (node.hasAttribute("code")) {
         let draw = node.getAttribute("code");
         logger.info(`Found Plus4U5.UuBmlDraw.Image "${draw}".`)
-        ctx.draws.add(draw);
+        ctx.draws.add({code: draw, version: 2});
+      }
+    }
+    if (node.nodeName === "UuBmlDraw.Imaging.Image") {
+      if (node.hasAttribute("code")) {
+        let draw = node.getAttribute("code");
+        logger.info(`Found UuBmlDraw.Imaging.Image "${draw}".`)
+        ctx.draws.add({code: draw, version: 3});
       }
     }
   }

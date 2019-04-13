@@ -1,3 +1,7 @@
+0.7.0
+-----
+* Support `uuBmlDrawg03`.
+
 0.6.0
 -----
 * Update `uu5-to-markdown` to use `0.4.2` for basic support of uuDcc.
